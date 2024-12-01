@@ -6,19 +6,19 @@ import QRCodePreview from './QRCodePreview';
 import FormControls from './FormControls';
 
 function QRCodeGenerator() {
-  const [options, setOptions] = useState({
-    data: '',
-    qrType: 'URL',
-    width: 300,
-    height: 300,
-    dotShape: 'square',
-    bgColor: '#FFFFFF',
-    fgColor: '#000000',
-    errorCorrectionLevel: 'M',
-    logoImage: '',
-    logoSize: 0.15, // Adjust this to change the default size of the logo
-    transparentBackground: false,
-  });
+    const [options, setOptions] = useState({
+        data: '',
+        qrType: 'URL',
+        width: 300, // Default size
+        height: 300, // Default size
+        dotShape: 'square',
+        bgColor: '#FFFFFF',
+        fgColor: '#000000',
+        errorCorrectionLevel: 'M',
+        logoImage: '',
+        logoSize: 0.15,
+        transparentBackground: false,
+      });
 
   const qrCode = useRef(
     new QRCodeStyling({
@@ -36,10 +36,14 @@ function QRCodeGenerator() {
     })
   );
 
-  useEffect(() => {
+// Ensure the canvas size is valid before updating the QR code
+useEffect(() => {
+    const canvasWidth = Math.max(options.width || 300, 100); // Minimum width: 100px
+    const canvasHeight = Math.max(options.height || 300, 100); // Minimum height: 100px
+
     qrCode.current.update({
-      width: options.width,
-      height: options.height,
+      width: canvasWidth,
+      height: canvasHeight,
       data: options.data,
       dotsOptions: { type: options.dotShape, color: options.fgColor },
       backgroundOptions: {
@@ -48,8 +52,8 @@ function QRCodeGenerator() {
       image: options.logoImage,
       imageOptions: {
         crossOrigin: 'anonymous',
-        imageSize: options.logoSize, // Update with the current logoSize
-        margin: 20,
+        imageSize: options.logoSize,
+        margin: 10,
       },
       qrOptions: {
         errorCorrectionLevel: options.errorCorrectionLevel,

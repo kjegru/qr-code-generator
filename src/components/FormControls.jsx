@@ -1,63 +1,36 @@
-// src/components/FormControls.jsx
+// FormControls.jsx
 
 import React from 'react';
 
 function FormControls({ options, setOptions }) {
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
+    const handleChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
 
-    if (type === 'checkbox') {
-      setOptions((prev) => ({ ...prev, [name]: checked }));
-    } else if (type === 'file') {
-      if (name === 'logoImage') {
-        // Handle logo image upload
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-          setOptions((prev) => ({ ...prev, logoImage: fileReader.result }));
-        };
-        fileReader.readAsDataURL(files[0]);
-      }
-    } else {
-      if (name === 'data') {
-        let isValid = true;
+        if (type === 'checkbox') {
+          setOptions((prev) => ({ ...prev, [name]: checked }));
+        } else if (type === 'file') {
+          if (name === 'logoImage') {
+            const fileReader = new FileReader();
+            fileReader.onload = () => {
+              setOptions((prev) => ({ ...prev, logoImage: fileReader.result }));
+            };
+            fileReader.readAsDataURL(files[0]);
+          }
+        } else {
+          if (name === 'width' || name === 'height') {
+            // Ensure temporary empty input is allowed
+            const numericValue = parseInt(value, 10);
+            if (!value || numericValue < 100 || numericValue > 1000) {
+              setOptions((prev) => ({ ...prev, [name]: value }));
+              return;
+            }
+          }
 
-        // Input validation based on QR code type
-        if (options.qrType === 'URL') {
-          const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
-          isValid = urlPattern.test(value);
-          if (!isValid && value !== '') {
-            alert('Please enter a valid URL starting with http:// or https://');
-            return;
-          }
-        } else if (options.qrType === 'Email') {
-          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          isValid = emailPattern.test(value);
-          if (!isValid && value !== '') {
-            alert('Please enter a valid email address.');
-            return;
-          }
+          setOptions((prev) => ({ ...prev, [name]: value }));
         }
-        // Add more validations for other types if needed
-
-        setOptions((prev) => ({ ...prev, [name]: value }));
-      } else {
-        setOptions((prev) => ({ ...prev, [name]: value }));
-      }
-    }
-  };
-
-  // Handle .vcf file upload for vCard QR codes
-  const handleVcfUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setOptions((prev) => ({ ...prev, data: event.target.result }));
       };
-      reader.readAsText(file);
-    }
-  };
+
+  const maxLogoSize = Math.min(options.width, options.height) * 0.8 / options.width;
 
   return (
     <form className="w-full md:w-1/2 p-4">
@@ -74,7 +47,6 @@ function FormControls({ options, setOptions }) {
           onChange={handleChange}
           className="w-full p-2 border rounded"
           placeholder="Enter your data here"
-          disabled={options.qrType === 'vCard'}
         />
       </div>
 
@@ -95,19 +67,6 @@ function FormControls({ options, setOptions }) {
         </select>
       </div>
 
-      {/* vCard Upload Field */}
-      {options.qrType === 'vCard' && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Upload vCard (.vcf)</label>
-          <input
-            type="file"
-            accept=".vcf"
-            onChange={handleVcfUpload}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-      )}
-
       {/* Appearance Settings Section */}
       <h2 className="text-xl font-semibold mb-2 mt-6">Appearance Settings</h2>
 
@@ -123,19 +82,58 @@ function FormControls({ options, setOptions }) {
         />
       </div>
 
-      {/* QR Code Size */}
+      {/* Logo Size Input */}
       <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Logo Size (relative)</label>
+        <input
+          type="range"
+          name="logoSize"
+          min="0.05" // Minimum size: 5% of the QR code
+          max="0.74"  // Maximum size: 50% of the QR code
+          step="0.01"
+          value={options.logoSize}
+          onChange={(e) =>
+            setOptions((prev) => ({ ...prev, logoSize: parseFloat(e.target.value) }))
+          }
+          className="w-full"
+        />
+        <p className="text-sm text-gray-600">
+          Current size: {(options.logoSize * 100).toFixed(0)}%
+        </p>
+      </div>
+
+        {/* QR Code Size */}
+        <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Size (px)</label>
         <input
-          type="number"
-          name="width"
-          value={options.width}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          min="100"
-          max="1000"
+            type="number"
+            name="width"
+            value={options.width}
+            onChange={(e) => {
+            const numericValue = parseInt(e.target.value, 10);
+
+            if (!e.target.value) {
+                // Allow temporary empty input but keep a default size
+                setOptions((prev) => ({ ...prev, width: '', height: '' }));
+            } else if (numericValue >= 100 && numericValue <= 1000) {
+                // Apply valid values for both width and height
+                setOptions((prev) => ({
+                ...prev,
+                width: numericValue,
+                height: numericValue,
+                }));
+            }
+            }}
+            className="w-full p-2 border rounded"
+            min="100"
+            max="1000"
+            placeholder="Enter size"
         />
-      </div>
+        <p className="text-sm text-gray-600">
+            Size must be between 100px and 1000px. Current: {options.width || 300}px ×{' '}
+            {options.height || 300}px
+        </p>
+        </div>
 
       {/* Dot Shape */}
       <div className="mb-4">
