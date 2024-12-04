@@ -1,19 +1,19 @@
 # Stage 1: Build the application
 FROM node:16-alpine AS build
 
-# Set the working directory
+# Set the working directory to app/
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package files from app/ directory
+COPY app/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy the rest of the application code
-COPY . .
+COPY app/ .
 
-# Build the application (if applicable)
+# Build the application
 RUN npm run build
 
 # Stage 2: Run the application
